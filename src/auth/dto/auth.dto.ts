@@ -17,10 +17,11 @@ export class AuthDto {
   @IsString({
     message: 'password is required',
   })
-  passwd: string;
+  password: string;
 
+  @IsOptional()
   @IsString({
     message: 'phone number is required',
   })
-  phone: String;
+  phone: string;
 }

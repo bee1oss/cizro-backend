@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -8,51 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model CostumerUser {
+model User {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
-  fullName String @default("not specified")
   email    String @unique
-  pasword  String
-  phone    String @default("")
+  password String
+  phone    String
 
-  favorites Product[]
-  reviews   Review[]
-  orders    Order[]
+  fullName String
 
-  @@map("costumeruser")
-}
+  stores       Store[] //user can have many stores (user)one to (sotres)many db connection
+  favorites    Product[]
+  reviews      Review[]
+  orders       Order[]
+  RefreshToken RefreshToken[]
 
-model StoreUser {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  fullName String @default("not specified")
-  email    String @unique
-  pasword  String
-  phone    String @default("")
-
-  stores Store[]
-  order  Order[]
-
-  @@map("storeuser")
+  @@map("user")
 }
 
 model Store {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   title       String
   description String?
 
-  storeUser   StoreUser? @relation(fields: [storeUserId], references: [id])
-  storeUserId String?    @map("store_id")
+  user   User?   @relation(fields: [userId], references: [id]) //connection with table user
+  userId String? @map("user_id") //conn with table user
 
-  products   Product[] //A store can have more than one product.
+  products   Product[] //one store can have many products (store)one to (products)many
   categories Category[]
   colors     Color[]
   reviews    Review[]
@@ -64,24 +50,25 @@ model Store {
 model Product {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   title       String
   description String
-  price       Decimal  @db.Decimal(10, 2) // 12345678.90
+  price       Decimal  @db.Decimal(10, 2)
   images      String[]
 
-  reviews    Review[]
-  orderItems OrderItem[]
+  store   Store? @relation(fields: [storeId], references: [id])
+  storeId String @map("store_id")
 
-  store          Store?        @relation(fields: [storeId], references: [id])
-  storeId        String?       @map("store_id")
-  category       Category?     @relation(fields: [categoryId], references: [id])
-  categoryId     String?       @map("category_id")
-  color          Color?        @relation(fields: [colorId], references: [id])
-  colorId        String?       @map("color_id")
-  costumerUser   CostumerUser? @relation(fields: [costumerUserId], references: [id])
-  costumerUserId String?       @map("costumerUser_id")
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String    @map("category_id")
+  color      Color?    @relation(fields: [colorId], references: [id])
+  colorId    String?   @map("color_id")
+  user       User?     @relation(fields: [userId], references: [id])
+  userId     String?   @map("user_id")
 
   @@map("product")
 }
@@ -89,14 +76,15 @@ model Product {
 model Category {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   title       String
   description String
 
   products Product[]
-  Store    Store?    @relation(fields: [storeId], references: [id])
-  storeId  String?
+
+  store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String? @map("store_id")
 
   @@map("category")
 }
@@ -104,12 +92,12 @@ model Category {
 model Color {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   name  String
   value String
 
-  products Product[]
+  product Product[]
 
   store   Store?  @relation(fields: [storeId], references: [id])
   storeId String? @map("store_id")
@@ -120,17 +108,16 @@ model Color {
 model Review {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
-  text    String
-  raiting Int
-
-  costumerUser   CostumerUser? @relation(fields: [costumerUserId], references: [id])
-  costumerUserId String?       @map("costumerUser_id")
-  store          Store?        @relation(fields: [storeId], references: [id])
-  storeId        String?       @map("store_id")
-  product        Product?      @relation(fields: [productId], references: [id])
-  productId      String?       @map("product_id")
+  text      String
+  rating    Int
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @map("user_id")
+  store     Store?   @relation(fields: [storeId], references: [id])
+  storeId   String?  @map("store_id")
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?  @map("product_id")
 
   @@map("review")
 }
@@ -138,17 +125,14 @@ model Review {
 model Order {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   status EnumOrderStatus @default(PENDING)
 
-  items OrderItem[]
-  total Int
-
-  costumerUser   CostumerUser? @relation(fields: [costumerUserId], references: [id])
-  costumerUserId String?       @map("costumerUser_id")
-  storeUser      StoreUser?    @relation(fields: [storeUserId], references: [id])
-  storeUserId    String?       @map("storeUser_id")
+  items  OrderItem[]
+  total  Int
+  user   User?       @relation(fields: [userId], references: [id])
+  userId String?     @map("user_id")
 
   @@map("order")
 }
@@ -156,19 +140,29 @@ model Order {
 model OrderItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   quantity Int
   price    Decimal @db.Decimal(10, 2)
 
-  order     Order?   @relation(fields: [orderId], references: [id])
-  orderId   String?  @map("order_id")
+  order   Order?  @relation(fields: [orderId], references: [id])
+  orderId String? @map("order_id")
+
+  Store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String? @map("store_id")
+
   product   Product? @relation(fields: [productId], references: [id])
   productId String?  @map("product_id")
-  store     Store?   @relation(fields: [storeId], references: [id])
-  storeId   String?  @map("store_id")
 
   @@map("order_item")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
 }
 
 enum EnumOrderStatus {

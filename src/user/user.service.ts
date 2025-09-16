@@ -4,11 +4,10 @@ import { AuthDto } from 'src/auth/dto/auth.dto';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
-export class StoreUserService {
+export class UserService {
   constructor(private readonly prisma: PrismaService) {}
-
   async getById(id: string) {
-    const storeuser = await this.prisma.storeuser.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         id,
       },
@@ -16,11 +15,11 @@ export class StoreUserService {
         stores: true,
       },
     });
-    return storeuser;
+    return user;
   }
 
   async getByEmail(email: string) {
-    const storeuser = await this.prisma.storeuser.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         email,
       },
@@ -28,16 +27,16 @@ export class StoreUserService {
         stores: true,
       },
     });
-    return storeuser;
+    return user;
   }
 
   async create(dto: AuthDto) {
-    return this.prisma.storeuser.create({
+    return this.prisma.user.create({
       data: {
-        fullname: dto.fullName,
+        fullName: dto.fullName,
         email: dto.email,
-        passwd: await hash(dto.passwd),
         phone: dto.phone,
+        password: await hash(dto.password),
       },
     });
   }
