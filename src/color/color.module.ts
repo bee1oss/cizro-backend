@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ColorService } from './color.service';
+import { PrismaService } from 'src/prisma.service';
 import { ColorController } from './color.controller';
+import { ColorService } from './color.service';
 
 @Module({
   controllers: [ColorController],
-  providers: [ColorService],
+  providers: [ColorService, PrismaService],
 })
 export class ColorModule {}
