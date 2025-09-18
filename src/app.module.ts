@@ -6,6 +6,14 @@ import { AuthModule } from './auth/auth.module';
 import { CsrfMiddleware } from './auth/middleware/csrf.middleware';
 import { RefreshtokenModule } from './refreshtoken/refreshtoken.module';
 import { UserModule } from './user/user.module';
+import { ColorModule } from './color/color.module';
+import { CategoryModule } from './category/category.module';
+import { FileModule } from './file/file.module';
+import { OrderModule } from './order/order.module';
+import { ProductModule } from './product/product.module';
+import { StoreModule } from './store/store.module';
+import { ReviewModule } from './review/review.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -21,6 +29,14 @@ import { UserModule } from './user/user.module';
       ],
     }),
     RefreshtokenModule,
+    ColorModule,
+    CategoryModule,
+    FileModule,
+    OrderModule,
+    ProductModule,
+    StoreModule,
+    ReviewModule,
+    StatisticsModule,
   ],
   providers: [
     {

@@ -13,6 +13,8 @@ export class UserService {
       },
       include: {
         stores: true,
+        orders: true,
+        favorites: true,
       },
     });
     return user;
@@ -25,6 +27,8 @@ export class UserService {
       },
       include: {
         stores: true,
+        orders: true,
+        favorites: true,
       },
     });
     return user;
@@ -39,6 +43,25 @@ export class UserService {
         password: await hash(dto.password),
       },
     });
+  }
+
+  async toggleFavorite(priductId: string, userId: string) {
+    const user = await this.getById(userId);
+
+    const isExists = user?.favorites.some((product) => product.id === priductId);
+    await this.prisma.user.update({
+      where: {
+        id: user?.id,
+      },
+      data: {
+        favorites: {
+          [isExists ? 'disconnect' : 'connect']: {
+            id: priductId,
+          },
+        },
+      },
+    });
+    return true;
   }
 
   async validatePassword(plainPass: string, hashedPass: string): Promise<boolean> {
