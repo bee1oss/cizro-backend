@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { hash, verify } from 'argon2';
-import { AuthDto } from 'src/auth/dto/auth.dto';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -20,6 +21,13 @@ export class UserService {
     return user;
   }
 
+  async getAuthShapeById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, roles: true },
+    });
+  }
+
   async getByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -34,15 +42,52 @@ export class UserService {
     return user;
   }
 
-  async create(dto: AuthDto) {
+  async createClient(dto: RegisterDto) {
     return this.prisma.user.create({
       data: {
         fullName: dto.fullName,
         email: dto.email,
-        phone: dto.phone,
+        phone: dto.phone ?? '',
         password: await hash(dto.password),
+        roles: { set: [Role.CLIENT] },
       },
     });
+  }
+
+  async createSeller(dto: RegisterDto) {
+    return this.prisma.user.create({
+      data: {
+        fullName: dto.fullName,
+        email: dto.email,
+        phone: dto.phone ?? '',
+        password: await hash(dto.password),
+        roles: { set: [Role.SELLER] },
+      },
+    });
+  }
+  /* ============ ADMIN REG ============ */
+  async createAdmin(dto: RegisterDto) {
+    return this.prisma.user.create({
+      data: {
+        fullName: dto.fullName,
+        email: dto.email,
+        phone: dto.phone ?? '',
+        password: await hash(dto.password),
+        roles: { set: [Role.ADMIN] },
+      },
+    });
+  }
+
+  async grantAdmin(userId: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        roles: {
+          set: Array.from(new Set([Role.ADMIN])),
+        },
+      },
+    });
+    return user;
   }
 
   async toggleFavorite(priductId: string, userId: string) {

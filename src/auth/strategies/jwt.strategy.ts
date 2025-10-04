@@ -1,29 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { Role } from '@prisma/client';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserService } from 'src/user/user.service';
+
+type AccessPayload = { sub: string; id?: string; roles: Role[] };
+
+const fromCookieOrBearer = (req: Request) =>
+  req?.cookies?.['access_token'] || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private configService: ConfigService,
-    private userService: UserService,
-  ) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(private cfg: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => {
-          return req?.cookies?.['access_token'] || null;
-        },
-      ]),
+      jwtFromRequest: fromCookieOrBearer,
+      secretOrKey: cfg.get('JWT_ACCESS_SECRET') || cfg.get('JWT_SECRET'),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET')!,
     });
   }
-  async validate({ id }: { id: string }) {
-    const user = await this.userService.getById(id);
-    if (!user) return null;
-    return user;
+
+  async validate(p: AccessPayload) {
+    const id = p.sub || p.id;
+    return { userId: id, id, roles: p.roles }; // req.user
   }
 }

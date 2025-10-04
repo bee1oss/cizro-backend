@@ -4,21 +4,15 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { CsrfMiddleware } from './auth/middleware/csrf.middleware';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { RefreshtokenModule } from './refreshtoken/refreshtoken.module';
 import { UserModule } from './user/user.module';
-import { ColorModule } from './color/color.module';
-import { CategoryModule } from './category/category.module';
-import { FileModule } from './file/file.module';
-import { OrderModule } from './order/order.module';
-import { ProductModule } from './product/product.module';
-import { StoreModule } from './store/store.module';
-import { ReviewModule } from './review/review.module';
-import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
+    ConfigModule,
     UserModule,
     ThrottlerModule.forRoot({
       throttlers: [
@@ -29,16 +23,9 @@ import { StatisticsModule } from './statistics/statistics.module';
       ],
     }),
     RefreshtokenModule,
-    ColorModule,
-    CategoryModule,
-    FileModule,
-    OrderModule,
-    ProductModule,
-    StoreModule,
-    ReviewModule,
-    StatisticsModule,
   ],
   providers: [
+    JwtStrategy,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

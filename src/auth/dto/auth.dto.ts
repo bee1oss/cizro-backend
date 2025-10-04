@@ -1,10 +1,6 @@
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class AuthDto {
-  @IsOptional()
-  @IsString()
-  fullName: string;
-
   @IsString({
     message: 'mail is required',
   })
@@ -20,8 +16,6 @@ export class AuthDto {
   password: string;
 
   @IsOptional()
-  @IsString({
-    message: 'phone number is required',
-  })
-  phone: string;
+  @IsString()
+  phone?: string;
 }

@@ -1,8 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { AuthUser } from 'src/auth/types/auth-user';
 
-export const CurrentUser = createParamDecorator((data: keyof User, cxt: ExecutionContext) => {
-  const request = cxt.switchToHttp().getRequest();
-  const user = request.user;
-  return data ? user[data] : user;
-});
+export const CurrentUser = createParamDecorator(
+  (data: keyof AuthUser | undefined, ctx: ExecutionContext) => {
+    const req = ctx.switchToHttp().getRequest();
+    const user = req.user as AuthUser | undefined;
+    return data ? user?.[data] : user;
+  },
+);
