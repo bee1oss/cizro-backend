@@ -5,7 +5,9 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { CsrfMiddleware } from './auth/middleware/csrf.middleware';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
+import { CategoryModule } from './category/category.module';
 import { RefreshtokenModule } from './refreshtoken/refreshtoken.module';
+import { StoreModule } from './store/store.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -23,6 +25,8 @@ import { UserModule } from './user/user.module';
       ],
     }),
     RefreshtokenModule,
+    StoreModule,
+    CategoryModule,
   ],
   providers: [
     JwtStrategy,

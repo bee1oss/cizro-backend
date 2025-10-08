@@ -6,26 +6,22 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Request, Response } from 'express';
+import { CurrentUser } from 'src/user/decorators/user.decorator';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
-import { Roles } from './decorators/roles.decorator';
 import { AuthDto } from './dto/auth.dto';
 import { RegisterDto } from './dto/register.dto';
-import { RolesGuard } from './guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Auth()
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
+  @Auth(Role.ADMIN)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('register-admin')
@@ -34,13 +30,13 @@ export class AuthController {
     @CurrentUser('id') actorId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken, user } = await this.authService.registerAdmin(dto, actorId);
+    const { user } = await this.authService.registerAdmin(dto, actorId);
 
-    const csrfToken = this.authService.generateCsrfToken();
+    /*const csrfToken = this.authService.generateCsrfToken();
 
     this.authService.addAccessTokenToResponse(res, accessToken);
     this.authService.addRefreshTokenToResponse(res, refreshToken);
-    this.authService.addCsrfTokenToResponse(res, csrfToken);
+    this.authService.addCsrfTokenToResponse(res, csrfToken);*/
 
     return { user };
   }
@@ -124,9 +120,4 @@ export class AuthController {
 
     return { message: 'Logged out' };
   }
-}
-function CurrentUser(
-  arg0: string,
-): (target: AuthController, propertyKey: 'registerAdmin', parameterIndex: 1) => void {
-  throw new Error('Function not implemented.');
 }

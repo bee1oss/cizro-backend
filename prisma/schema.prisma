@@ -8,8 +8,9 @@ datasource db {
 }
 
 /**
- * ---- Enums ----
+ * ===== Enums =====
  */
+
 enum Role {
   ADMIN
   SELLER
@@ -22,14 +23,25 @@ enum StoreStatus {
   REJECTED
 }
 
-enum EnumOrderStatus {
+enum ProductStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum OrderStatus {
   PENDING
   PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
 
 /**
- * ---- Models ----
+ * ===== Auth / Users =====
  */
+
 model User {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -40,18 +52,22 @@ model User {
   fullName String?
   phone    String?
 
-  roles Role[] // çok rollü: ADMIN, SELLER, CLIENT
+  roles Role[]
 
-  // relations
-  stores         Store[]        @relation("StoreOwner") // sahip olduğu mağazalar
-  orders         Order[]        @relation("OrderBuyer") // verdiği siparişler
-  reviews        Review[] // yazdığı yorumlar
-  favorites      Product[]      @relation("UserFavorites") // M2M
-  refreshTokens  RefreshToken[] // RT kayıtları
-  approvedStores Store[]        @relation("StoreApprovedBy") // admin olarak onayladıkları
+  // Relations
+  stores         Store[]        @relation("StoreOwner")
+  approvedStores Store[]        @relation("StoreApprovedBy")
+  orders         Order[]        @relation("OrderBuyer")
+  reviews        Review[]
+  favorites      Product[] // M:N (User <-> Product)
+  refreshTokens  RefreshToken[]
 
   @@map("user")
 }
+
+/**
+ * ===== Store =====
+ */
 
 model Store {
   id        String   @id @default(cuid())
@@ -61,39 +77,49 @@ model Store {
   title       String
   description String?
 
-  owner   User   @relation("StoreOwner", fields: [ownerId], references: [id])
   ownerId String
+  owner   User   @relation("StoreOwner", fields: [ownerId], references: [id])
 
   status       StoreStatus @default(PENDING)
   approvedAt   DateTime?
-  approvedBy   User?       @relation("StoreApprovedBy", fields: [approvedById], references: [id])
   approvedById String?
+  approvedBy   User?       @relation("StoreApprovedBy", fields: [approvedById], references: [id])
   rejectReason String?
 
-  products   Product[]
-  colors     Color[]
-  reviews    Review[]
-  orderItems OrderItem[] // satış raporları için denormalize
+  products Product[]
+  reviews  Review[]
 
   @@index([ownerId])
   @@index([status])
   @@map("store")
 }
 
+/**
+ * ===== Category (Tree) =====
+ */
+
 model Category {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  title    String
-  slug     String  @unique
-  isActive Boolean @default(true)
+  title String
+  slug  String @unique
 
-  products Product[]
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  products Product[] // Her Product tek bir kategoriye bağlı (basit yaklaşım)
 
   @@unique([title])
+  @@index([parentId])
   @@map("category")
 }
+
+/**
+ * ===== Product (Mağazaya ait ürün kaydı) =====
+ */
 
 model Product {
   id        String   @id @default(cuid())
@@ -101,61 +127,57 @@ model Product {
   updatedAt DateTime @updatedAt
 
   title       String
-  description String
-  price       Decimal  @db.Decimal(10, 2)
+  description String?
   images      String[]
+  price       Decimal       @db.Decimal(10, 2)
+  stock       Int           @default(0)
+  status      ProductStatus @default(PENDING)
 
-  store   Store  @relation(fields: [storeId], references: [id])
+  // İlişkiler
   storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
 
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  categoryId String?
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
-  color   Color?  @relation(fields: [colorId], references: [id])
-  colorId String?
+  // Opsiyonel marka bilgisi
+  brand String?
 
-  orderItems  OrderItem[]
-  reviews     Review[]
-  favoritedBy User[]      @relation("UserFavorites") // M2M karşılığı
+  // Varyant gerekiyorsa (renk/beden) basit alanlar:
+  color String?
+  size  String?
 
-  @@index([storeId])
+  reviews    Review[]
+  orderItems OrderItem[]
+
+  wishlistedBy User[] // favorites M:N karşılığı (implicit)
+
+  // Arama ve raporlar için indexler
+  @@index([storeId, status])
   @@index([categoryId])
-  @@index([colorId])
+  @@index([price])
   @@map("product")
 }
 
-model Color {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  name  String
-  value String // örn: #RRGGBB (uygulama tarafında doğrula)
-
-  products Product[] // renk birden çok üründe kullanılabilir
-
-  store   Store  @relation(fields: [storeId], references: [id])
-  storeId String
-
-  @@unique([storeId, name]) // aynı mağazada aynı isimli renk olmasın
-  @@index([storeId])
-  @@map("color")
-}
+/**
+ * ===== Order & OrderItem =====
+ */
 
 model Order {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  status EnumOrderStatus @default(PENDING)
-  total  Decimal         @db.Decimal(10, 2)
-
-  buyer   User   @relation("OrderBuyer", fields: [buyerId], references: [id])
   buyerId String
+  buyer   User   @relation("OrderBuyer", fields: [buyerId], references: [id])
+
+  status OrderStatus @default(PENDING)
+  total  Decimal     @db.Decimal(10, 2)
 
   items OrderItem[]
 
   @@index([buyerId])
+  @@index([status, createdAt])
   @@map("order")
 }
 
@@ -164,49 +186,59 @@ model OrderItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  quantity Int
-  price    Decimal @db.Decimal(10, 2)
-
-  order   Order  @relation(fields: [orderId], references: [id])
   orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  store   Store  @relation(fields: [storeId], references: [id])
-  storeId String
-
-  product   Product @relation(fields: [productId], references: [id])
   productId String
+  product   Product @relation(fields: [productId], references: [id])
 
-  @@index([storeId, createdAt])
+  storeId  String // denormalize: raporlama ve sorgu kolaylığı
+  quantity Int
+
+  // Sipariş anındaki snapshot (fiyat/ad başlık değişse bile geçmiş sabit kalsın)
+  priceAtPurchase Decimal @db.Decimal(10, 2)
+  titleAtPurchase String?
+
   @@index([orderId])
   @@index([productId])
+  @@index([storeId, createdAt])
   @@map("order_item")
 }
+
+/**
+ * ===== Review =====
+ */
 
 model Review {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  text   String
-  rating Int // 1..5 (DTO ile doğrula)
-
-  author   User   @relation(fields: [authorId], references: [id])
   authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
-  store     Store?   @relation(fields: [storeId], references: [id])
-  storeId   String?
-  product   Product? @relation(fields: [productId], references: [id])
   productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id])
+
+  rating Int
+  text   String
 
   @@index([authorId])
-  @@index([storeId])
   @@index([productId])
+  @@index([storeId])
   @@map("review")
 }
 
+/**
+ * ===== Refresh Token (hash + rotation) =====
+ */
+
 model RefreshToken {
   id        String    @id @default(cuid())
-  tokenHash String    @unique // raw yerine hash saklanır
+  tokenHash String    @unique
   userId    String
   user      User      @relation(fields: [userId], references: [id])
   createdAt DateTime  @default(now())
@@ -215,7 +247,6 @@ model RefreshToken {
   userAgent String?
   ip        String?
 
-  // Rotation zinciri (self relation)
   replacedById String?
   replacedBy   RefreshToken?  @relation("RTReplace", fields: [replacedById], references: [id])
   replaced     RefreshToken[] @relation("RTReplace")
