@@ -17,11 +17,14 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
-@Controller('category')
+@Controller('categories')
 export class CategoryController {
   constructor(private readonly categories: CategoryService) {}
 
   // Yalnızca ADMIN ekleyebilir
+  /*Not:Agac sistemi ile kurulu yani ilk once ana category olusturulacak Or:{"title":"Elektronik"} sonra ise 
+  {"title":"Cep Telefonu","parentId:"cat_1"} tarzinda olmasi gerekiyor.
+  */
   @Auth(Role.ADMIN)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
