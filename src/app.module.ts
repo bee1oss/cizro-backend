@@ -9,6 +9,7 @@ import { CategoryModule } from './category/category.module';
 import { RefreshtokenModule } from './refreshtoken/refreshtoken.module';
 import { StoreModule } from './store/store.module';
 import { UserModule } from './user/user.module';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { UserModule } from './user/user.module';
     RefreshtokenModule,
     StoreModule,
     CategoryModule,
+    ProductModule,
   ],
   providers: [
     JwtStrategy,
