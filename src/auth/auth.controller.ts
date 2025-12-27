@@ -32,9 +32,9 @@ export class AuthController {
   ) {
     const { user } = await this.authService.registerAdmin(dto, actorId);
 
-    /*const csrfToken = this.authService.generateCsrfToken();
+    const csrfToken = this.authService.generateCsrfToken();
 
-    this.authService.addAccessTokenToResponse(res, accessToken);
+    /*this.authService.addAccessTokenToResponse(res, accessToken);
     this.authService.addRefreshTokenToResponse(res, refreshToken);
     this.authService.addCsrfTokenToResponse(res, csrfToken);*/
 

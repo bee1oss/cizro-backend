@@ -11,7 +11,7 @@ export class CsrfMiddleware implements NestMiddleware {
       return next();
     }
 
-    // Cookie ve header'ı al (header isimleri Node'da lower-case)
+    // Cookie ve header'i al (header isimleri Node'da lower-case)
     const cookieToken = req.cookies?.['csrf_token'];
     const headerRaw =
       req.headers['x-csrf-token'] ?? req.headers['csrf-token'] ?? req.headers['x-xsrf-token'];

@@ -1,4 +1,3 @@
-// prisma/seed.ts
 import { PrismaClient, Role } from '@prisma/client';
 import { hash } from 'argon2';
 
@@ -20,7 +19,7 @@ async function main() {
         email,
         fullName,
         password: await hash(plain),
-        roles: { set: [Role.ADMIN] }, // başlangıçta sadece ADMIN
+        roles: { set: [Role.ADMIN] }, // baslangicta sadece ADMIN
       },
     });
     console.log(`✔ Created admin user: ${email}`);

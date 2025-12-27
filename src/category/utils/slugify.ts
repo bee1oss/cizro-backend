@@ -1,5 +1,5 @@
 export function slugify(input: string) {
-  // 1) TR özel küçük harf dönüştürme
+  // 1) TR ozel kucuk harf donusturme
   const lower = input
     .toLocaleLowerCase('tr')
     .replace(/ı/g, 'i')
@@ -9,7 +9,7 @@ export function slugify(input: string) {
     .replace(/ö/g, 'o')
     .replace(/ç/g, 'c');
 
-  // 2) Aksan/işaret temizliği + alfasayısal dışını tire yap
+  // 2) isaret temizliği
   const ascii = lower
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')

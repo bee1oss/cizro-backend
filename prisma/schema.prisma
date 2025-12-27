@@ -54,7 +54,7 @@ model User {
 
   roles Role[]
 
-  // Relations
+  // Iliskiler
   stores         Store[]        @relation("StoreOwner")
   approvedStores Store[]        @relation("StoreApprovedBy")
   orders         Order[]        @relation("OrderBuyer")
@@ -110,7 +110,7 @@ model Category {
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
 
-  products Product[] // Her Product tek bir kategoriye bağlı (basit yaklaşım)
+  products Product[] // Her Product tek bir kategoriye bağli
 
   @@unique([title])
   @@index([parentId])
@@ -118,7 +118,7 @@ model Category {
 }
 
 /**
- * ===== Product (Mağazaya ait ürün kaydı) =====
+ * ===== Product (Mağazaya ait ürün kaydi) =====
  */
 
 model Product {
@@ -140,10 +140,9 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  // Opsiyonel marka bilgisi
+  // Prop bilgiler
   brand String?
 
-  // Varyant gerekiyorsa (renk/beden) basit alanlar:
   color String?
   size  String?
 
@@ -195,7 +194,7 @@ model OrderItem {
   storeId  String // denormalize: raporlama ve sorgu kolaylığı
   quantity Int
 
-  // Sipariş anındaki snapshot (fiyat/ad başlık değişse bile geçmiş sabit kalsın)
+  // Sipariş anındaki snapshot (fiyat/ad başlik değişse bile geçmiş sabit kalsin)
   priceAtPurchase Decimal @db.Decimal(10, 2)
   titleAtPurchase String?
 

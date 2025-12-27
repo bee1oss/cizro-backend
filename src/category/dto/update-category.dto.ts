@@ -7,8 +7,8 @@ export class UpdateCategoryDto {
   @MaxLength(100)
   title?: string;
 
-  // kategoriyi başka bir ebeveyn altına taşımak istersen
+  // kategoriyi başka bir ebeveyn altina tasimak istersen
   @IsOptional()
   @IsString()
-  parentId?: string | null; // null => kök kategori yap
+  parentId?: string | null; // null => kok kategori yap
 }

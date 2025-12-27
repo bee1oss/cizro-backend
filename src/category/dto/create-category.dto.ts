@@ -6,7 +6,7 @@ export class CreateCategoryDto {
   @MaxLength(100)
   title: string;
 
-  // alt kategori oluşturmak için parentId gönder
+  // alt kategori olusturmak için parentId gonder
   @IsOptional()
   @IsString()
   parentId?: string;
